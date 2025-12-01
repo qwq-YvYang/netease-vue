@@ -6,7 +6,6 @@ export const defaultSettings = {
   writeMetadata: false, // 是否写入元数据
   zipDownload: false, // 是否压缩下载
   srtLyricsDownload: false, // 是否下载SRT歌词（否则下载LRC）
-  apiVersion: 'API_V1', // 默认使用接口1；可选: API_V1, API_V2
   layoutMode: 'single-column', // 布局模式: dual-column, single-column
   // 播放链接缓存设置
   enableUrlCache: false, // 是否启用播放链接缓存

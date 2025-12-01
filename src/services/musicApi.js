@@ -31,20 +31,8 @@ const createFetchOptions = (data = null) => {
   return options
 }
 
-// 根据设置选择 API 基础 URL（使用完整外部地址）
-const getApiBase = () => {
-  const version = settings?.apiVersion
-  switch (version) {
-    case 'API_V1':
-      return 'https://wyapi-1.toubiec.cn'
-    case 'API_V2':
-      return 'https://wyapi-2.toubiec.cn'
-    case 'API_DEFAULT':
-    default:
-      // 默认映射为接口1
-      return 'https://wyapi-1.toubiec.cn'
-  }
-}
+// 固定 API 基础 URL（不再支持接口版本切换）
+const getApiBase = () => 'https://wyapi-1.toubiec.cn'
 
 // 可用性检测与故障切换支持
 const FALLBACK_BASES = [
@@ -53,11 +41,7 @@ const FALLBACK_BASES = [
   'https://wyapi-1.toubiec.cn'
 ]
 
-const getPreferredBaseList = () => {
-  const preferred = getApiBase()
-  const others = FALLBACK_BASES.filter(b => b !== preferred)
-  return [preferred, ...others]
-}
+const getPreferredBaseList = () => FALLBACK_BASES
 
 let resolvedBase = null
 let lastResolveAt = 0
@@ -149,14 +133,7 @@ const fetchApi = async (url, data = null) => {
 }
 
 // 主动探测所有候选域的可用性（供设置页或调试使用）
-export const checkApiAvailability = async () => {
-  const results = []
-  for (const base of getPreferredBaseList()) {
-    const ok = await isReachable(base)
-    results.push({ base, reachable: ok })
-  }
-  return results
-}
+ 
 
 // 从文本中提取URL
 const extractUrlFromText = (text) => {

@@ -21,15 +21,14 @@ import {
 } from './utils/paginationManager.js'
 import { isMobile, initDeviceDetection, cleanupDeviceDetection } from './utils/deviceDetector.js'
 import { getCurrentExampleLinks } from './utils/exampleData.js'
-import ApiListDialog from './components/ApiListDialog.vue'
-import { checkApiAvailability } from './services/musicApi.js'
+ 
 
 // 本地组件状态
 const selectedQuality = ref('lossless') // 默认无损音质
 const showSettingsDialog = ref(false)
 const showWelcomeDialog = ref(false)
  
-const showApiDialog = ref(false)
+ 
 // 已移除极验弹窗相关状态
 // 主题切换全屏Loading
 const toggleThemeWithLoading = () => {
@@ -61,25 +60,7 @@ const qualityOptions = Object.entries(QUALITY_LEVELS).map(([value, label]) => ({
   label
 }))
 
-// API 版本选项（仅保留接口1/接口2）
-const apiVersionOptions = [
-  { value: 'API_V1', label: '接口1' },
-  { value: 'API_V2', label: '接口2' }
-]
-
-// 显示当前接口版本的中文标签
-const apiVersionLabel = computed(() => {
-  const version = settings?.apiVersion
-  switch (version) {
-    case 'API_V1':
-      return '接口1'
-    case 'API_V2':
-      return '接口2'
-    case 'API_DEFAULT':
-    default:
-      return '接口1'
-  }
-})
+ 
 
 // 环境信息（是否本地开发）
 const isLocalEnv = computed(() => {
@@ -88,72 +69,7 @@ const isLocalEnv = computed(() => {
   return host === 'localhost' || host === '127.0.0.1' || host === '::1'
 })
 
-// 延迟测试与可用性展示
-const testingLatency = ref(false)
-const apiLatencyResults = ref([])
-
-const measureLatency = async (base) => {
-  const start = performance.now()
-  try {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 3000)
-    await fetch(base, { method: 'HEAD', mode: 'no-cors', signal: controller.signal })
-    clearTimeout(timer)
-    const end = performance.now()
-    return { base, latency: Math.round(end - start), reachable: true }
-  } catch {
-    return { base, latency: null, reachable: false }
-  }
-}
-
-const runLatencyTest = async () => {
-  if (testingLatency.value) return
-  testingLatency.value = true
-  try {
-    // 使用服务层提供的候选域检测，再对每个域测量耗时
-    const availability = await checkApiAvailability()
-    const bases = availability.map(a => a.base)
-    const results = []
-    for (const base of bases) {
-      // 逐个串行测量，避免同时触发过多请求
-      const r = await measureLatency(base)
-      results.push(r)
-    }
-    // 将域名结果映射为“接口2/接口1”标签
-    const apiLabelByBase = {
-      'https://wyapi-2.toubiec.cn': '接口2',
-      'https://wyapi-1.toubiec.cn': '接口1'
-    }
-    apiLatencyResults.value = results.map(r => ({ ...r, label: apiLabelByBase[r.base] || r.base }))
-    ElMessage.success('延迟测试完成')
-  } catch {
-    ElMessage.error('延迟测试失败，请稍后重试')
-  } finally {
-    testingLatency.value = false
-  }
-}
-
-
-// 将延迟结果映射到按钮标签显示
-const versionLabelMap = { API_DEFAULT: '默认', API_V1: '接口1', API_V2: '接口2' }
-const getLatencyByVersion = (ver) => {
-  const label = versionLabelMap[ver]
-  return apiLatencyResults.value.find(i => i.label === label)
-}
-const getLatencyText = (ver) => {
-  const r = getLatencyByVersion(ver)
-  if (!r) return ''
-  return r.reachable ? `${r.latency} ms` : '不可达'
-}
-const getLatencyClass = (ver) => {
-  const r = getLatencyByVersion(ver)
-  if (!r) return 'latency-none'
-  if (!r.reachable || r.latency == null) return 'latency-high'
-  const ms = Number(r.latency) || 0
-  if (ms < 50) return 'latency-low'
-  if (ms < 150) return 'latency-medium'
-  return 'latency-high'
-}
+ 
 
 
 // 组件卸载时清理监听器
@@ -240,7 +156,7 @@ const handleTrackParsed = async (data) => {
     
     ElNotification({
       title: '解析成功',
-      message: `成功解析歌曲：${result.name} (${result.qualityName}) ${apiVersionLabel.value}`,
+      message: `成功解析歌曲：${result.name} (${result.qualityName})`,
       type: 'success'
     })
   } catch (error) {
@@ -943,25 +859,7 @@ const computedPlaylistInfo = computed(() => {
         </div>
         <!-- 解析与缓存配置统一为 Element Plus 表单 -->
         <el-form :model="settings" label-width="120px" label-position="left" class="settings-form">
-          <!-- 接口版本选择 -->
-          <el-form-item label="接口版本">
-            <el-select
-              v-model="settings.apiVersion"
-              placeholder="请选择接口版本"
-              style="width: 240px"
-              @change="(val) => { setSetting('apiVersion', val); ElMessage.success('接口版本已保存'); }"
-            >
-              <el-option v-for="option in apiVersionOptions" :key="option.value" :label="option.label" :value="option.value">
-                <span class="option-line">
-                  <span>{{ option.label }}</span>
-                  <span class="latency-chip" :class="getLatencyClass(option.value)" v-if="apiLatencyResults.length"><i class="dot"></i>{{ getLatencyText(option.value) }}</span>
-                </span>
-              </el-option>
-            </el-select>
-            <div class="form-item-hint">
-              <el-text type="info" size="small">默认即可正常使用，变更以兼容不同服务端版本</el-text>
-            </div>
-          </el-form-item>
+          
 
           <!-- 播放链接缓存开关 -->
           <el-form-item label="启用链接缓存">
@@ -974,24 +872,19 @@ const computedPlaylistInfo = computed(() => {
             </div>
           </el-form-item>
 
-          <!-- 环境与版本信息 -->
+          <!-- 环境信息 -->
           <el-form-item label="环境与版本">
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <el-tag :type="isLocalEnv ? 'success' : 'info'" size="small">
                 {{ isLocalEnv ? 'Dev环境' : 'Prod环境' }}
               </el-tag>
-              <el-text type="info" size="small">当前接口版本：{{ apiVersionLabel }}</el-text>
+              
             </div>
           </el-form-item>
 
           
 
-          <!-- 延迟测试与可用性 -->
-          <el-form-item label="延迟测试">
-            <div>
-              <el-button size="small" :loading="testingLatency" @click="runLatencyTest">延迟测试</el-button>
-            </div>
-          </el-form-item>
+          
         </el-form>
 
       </div>
@@ -1052,19 +945,7 @@ const computedPlaylistInfo = computed(() => {
     </template>
   </el-button>
 
-  <!-- API 列表按钮 -->
-  <el-button
-    class="floating-api-btn floating-fab"
-    type="default"
-    circle
-    size="large"
-    @click="showApiDialog = true"
-    title="API 接口列表"
-  >
-    <template #icon>
-      <el-icon :size="22"><Document /></el-icon>
-    </template>
-  </el-button>
+  
 
   
 
@@ -1074,15 +955,7 @@ const computedPlaylistInfo = computed(() => {
 
   
 
-  <!-- API 列表弹窗 -->
-  <Suspense>
-    <template #default>
-      <ApiListDialog v-model="showApiDialog" />
-    </template>
-    <template #fallback>
-      <div></div>
-    </template>
-  </Suspense>
+  
 
 </el-config-provider>
 </template>
@@ -3258,40 +3131,7 @@ margin-top:0;
   box-shadow: var(--el-box-shadow);
 }
 
-/* API 列表按钮样式 - 位于最上方 */
-.floating-api-btn {
-  position: fixed;
-  bottom: 240px; /* 在主题切换按钮之上 */
-  right: 24px;
-  z-index: 1000;
-  width: 56px;
-  height: 56px;
-  font-size: 20px;
-  box-shadow: var(--el-box-shadow-light);
-  transition: var(--el-transition-all);
-}
-.floating-api-btn:hover { transform: translateY(-2px); box-shadow: var(--el-box-shadow); }
-.floating-api-btn:active { transform: translateY(0); }
-
-@media (max-width: 768px) {
-  .floating-api-btn {
-    bottom: 200px;
-    right: 20px;
-    width: 48px;
-    height: 48px;
-    font-size: 18px;
-  }
-}
-
-@media (max-width: 480px) {
-  .floating-api-btn {
-    bottom: 192px;
-    right: 16px;
-    width: 44px;
-    height: 44px;
-    font-size: 16px;
-  }
-}
+/* 移除 API 列表按钮样式 */
 
 .floating-theme-btn:active {
   transform: translateY(0);
