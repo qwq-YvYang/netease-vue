@@ -32,13 +32,13 @@ const createFetchOptions = (data = null) => {
 }
 
 // 固定 API 基础 URL（不再支持接口版本切换）
-const getApiBase = () => 'https://wyapi-1.toubiec.cn'
+const getApiBase = () => 'https://127.0.0.1:8000'
 
 // 可用性检测与故障切换支持
 const FALLBACK_BASES = [
-  'https://wyapi.toubiec.cn',
-  'https://wyapi-2.toubiec.cn',
-  'https://wyapi-1.toubiec.cn'
+  'https://127.0.0.1:8000',
+  'https://127.0.0.1:8000',
+  'https://127.0.0.1:8000'
 ]
 
 const getPreferredBaseList = () => FALLBACK_BASES
