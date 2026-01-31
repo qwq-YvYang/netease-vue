@@ -42,7 +42,7 @@ export default defineConfig({
     port: 5173,      // 指定端口
     open: true,       // 自动打开浏览器
     proxy: {
-      '/nwct: {
+      '/nwct': {
         target: 'http://cn-hk-bgp-5.ofalias.net:56952',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/nwct/, '')
