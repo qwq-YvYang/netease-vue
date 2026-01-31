@@ -42,10 +42,10 @@ export default defineConfig({
     port: 5173,      // 指定端口
     open: true,       // 自动打开浏览器
     proxy: {
-      '/wyapi2': {
-        target: 'https://wyapi-2.toubiec.cn',
+      '/nwct: {
+        target: 'http://cn-hk-bgp-5.ofalias.net:56952',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/wyapi2/, '')
+        rewrite: (path) => path.replace(/^\/nwct/, '')
       },
       '/wyapi': {
         target: 'https://wyapi-1.toubiec.cn',
