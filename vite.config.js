@@ -46,16 +46,6 @@ export default defineConfig({
         target: 'http://cn-hk-bgp-5.ofalias.net:56952',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/nwct/, '')
-      },
-      '/wyapi': {
-        target: 'https://wyapi-1.toubiec.cn',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/wyapi/, '')
-      },
-      '/netease': {
-        target: 'https://netease-cloud-music-api-psi-six-56.vercel.app',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/netease/, '')
       }
     }
   },
